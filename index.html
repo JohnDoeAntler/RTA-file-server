@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+<body>
+	<div>
+		image
+		<form action="http://localhost:3333/image" method="POST" encType="multipart/form-data">
+			<input type="text" name="id">
+	
+			<input type="file" name="file">
+	
+			<input type="submit" value="submit">
+		</form>
+	</div>
+
+	<hr>
+
+	<div>
+		audio
+		<form action="http://localhost:3333/audio" method="POST" encType="multipart/form-data">
+			<input type="text" name="id">
+	
+			<input type="file" name="file">
+	
+			<input type="submit" value="submit">
+		</form>
+	</div>
+
+	<hr>
+
+	<div>
+		progress
+		<form action="http://localhost:3333/progress" method="POST" encType="multipart/form-data">
+			<input type="text" name="userId">
+
+			<input type="text" name="workId">
+	
+			<input type="file" name="file">
+	
+			<input type="submit" value="submit">
+		</form>
+	</div>
+</body>
+</html>
