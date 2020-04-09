@@ -5,6 +5,8 @@ const app = express();
 const path = require('path');
 const cuid = require('cuid');
 const { GraphQLClient } = require("graphql-request");
+const cors = require('cors');
+
 require("dotenv").config();
 
 //
@@ -12,6 +14,7 @@ require("dotenv").config();
 //
 app.use(bodyParser());
 app.use(fileUpload());
+app.use(cors());
 
 //
 // ─── PUBLIC FOLDER ──────────────────────────────────────────────────────────────
