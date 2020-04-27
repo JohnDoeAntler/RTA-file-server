@@ -195,6 +195,58 @@ app.post('/progress', (req, res) => {
 	}
 });
 
+//
+// ─── LISTEN RESULT ──────────────────────────────────────────────────────────────
+//
+app.post('/result', (req, res) => {
+	//
+	// ─── GET WORK ID ────────────────────────────────────────────────────────────────
+	//
+	const id = req.body.id || req.params.id || req.query.id;
+
+	//
+	// ─── IF IT IS IMAGE FILE ────────────────────────────────────────────────────────
+	//
+	if (isVideoFile(req.files.file)) {
+		//
+		// ─── STORE FILE ─────────────────────────────────────────────────────────────────
+		//
+		storeFile(req, res, (path)=> {
+			//
+			// ─── STORE FILE ─────────────────────────────────────────────────────────────────
+			//
+			client.request(`
+				mutation ProgressEdit (
+					$id: uuid!
+					$resultUrl: String!
+				) {
+					update_progresses (
+						where: {
+							id: {
+								_eq: $id
+							}
+						}
+						_set: {
+							resultUrl: $resultUrl
+						}
+					) {
+						affected_rows
+					}
+				}
+			`, {
+				id,
+				resultUrl: path
+			}).then(data =>
+				res.send({
+					...data.insert_progresses
+				})
+			)
+		});
+	} else {
+		res.sendStatus(403)
+	}
+});
+
 const isImageFile = (file) => file && [
 		"image/png",
 		"image/jpeg",
