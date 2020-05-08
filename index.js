@@ -6,6 +6,7 @@ const path = require('path');
 const cuid = require('cuid');
 const { GraphQLClient } = require("graphql-request");
 const cors = require('cors');
+const axios = require('axios');
 
 require("dotenv").config();
 
@@ -184,11 +185,19 @@ app.post('/progress', (req, res) => {
 				userId,
 				workId,
 				drivingVideoUrl: path
-			}).then(data =>
+			}).then(data => {
+
 				res.send({
 					...data.insert_progresses.returning
-				})
-			)
+				});
+
+				axios.post(process.env.SYNTHESIZER_ENDPOINT)
+					.then(() => {
+						console.log("successfully sent a synthesization request.")
+					}).catch((e) => {
+						console.log("unable to send a synthesization request.")
+					});
+			});
 		});
 	} else {
 		res.sendStatus(403)
