@@ -54,7 +54,7 @@ app.post('/image', (req, res) => {
 		//
 		// ─── STORE FILE ─────────────────────────────────────────────────────────────────
 		//
-		storeFile(req, res, (path)=> {
+		storeFile(req, res, (path) => {
 			//
 			// ─── STORE FILE ─────────────────────────────────────────────────────────────────
 			//
@@ -104,7 +104,7 @@ app.post('/audio', (req, res) => {
 		//
 		// ─── STORE FILE ─────────────────────────────────────────────────────────────────
 		//
-		storeFile(req, res, (path)=> {
+		storeFile(req, res, (path) => {
 			//
 			// ─── STORE FILE ─────────────────────────────────────────────────────────────────
 			//
@@ -156,48 +156,76 @@ app.post('/progress', (req, res) => {
 	// ─── IF IT IS IMAGE FILE ────────────────────────────────────────────────────────
 	//
 	if (isVideoFile(req.files.file)) {
-		//
-		// ─── STORE FILE ─────────────────────────────────────────────────────────────────
-		//
-		storeFile(req, res, (path)=> {
-			//
-			// ─── STORE FILE ─────────────────────────────────────────────────────────────────
-			//
-			client.request(`
-				mutation ProgressNew (
-					$userId: String!
+		client.request(`
+				query ProgressCondition(
 					$workId: uuid!
-					$drivingVideoUrl: String!
 				) {
-					insert_progresses (
-						objects: {
-							userId: $userId,
-							workId: $workId,
-							drivingVideoUrl: $drivingVideoUrl
-						}
+					works_by_pk (
+						id: $workId
 					) {
-						returning {
-							drivingVideoUrl
+						image_datas_aggregate {
+							aggregate {
+								count
+							}
+						}
+
+						voice_datas_aggregate {
+							aggregate {
+								count
+							}
 						}
 					}
 				}
 			`, {
-				userId,
-				workId,
-				drivingVideoUrl: path
-			}).then(data => {
+			workId
+		}).then((data) => {
+			if (data.works_by_pk.image_datas_aggregate.aggregate.count > 0 && data.works_by_pk.voice_datas_aggregate.aggregate.count > 0) {
+				//
+				// ─── STORE FILE ─────────────────────────────────────────────────────────────────
+				//
+				storeFile(req, res, (path) => {
+					//
+					// CREATE NEW PROGRESS
+					//
+					client.request(`
+						mutation ProgressNew (
+							$userId: String!
+							$workId: uuid!
+							$drivingVideoUrl: String!
+						) {
+							insert_progresses (
+								objects: {
+									userId: $userId,
+									workId: $workId,
+									drivingVideoUrl: $drivingVideoUrl
+								}
+							) {
+								returning {
+									drivingVideoUrl
+								}
+							}
+						}
+					`, {
+						userId,
+						workId,
+						drivingVideoUrl: path
+					}).then(data => {
 
-				res.send({
-					...data.insert_progresses.returning
-				});
+						res.send({
+							...data.insert_progresses.returning
+						});
 
-				axios.post(process.env.SYNTHESIZER_ENDPOINT)
-					.then(() => {
-						console.log("successfully sent a synthesization request.")
-					}).catch((e) => {
-						console.log("unable to send a synthesization request.")
+						axios.post(process.env.SYNTHESIZER_ENDPOINT)
+							.then(() => {
+								console.log("successfully sent a synthesization request.")
+							}).catch((e) => {
+								console.log("unable to send a synthesization request.")
+							});
 					});
-			});
+				});
+			} else {
+				res.sendStatus(403);
+			}
 		});
 	} else {
 		res.sendStatus(403)
@@ -220,7 +248,7 @@ app.post('/result', (req, res) => {
 		//
 		// ─── STORE FILE ─────────────────────────────────────────────────────────────────
 		//
-		storeFile(req, res, (path)=> {
+		storeFile(req, res, (path) => {
 			//
 			// ─── STORE FILE ─────────────────────────────────────────────────────────────────
 			//
@@ -257,20 +285,20 @@ app.post('/result', (req, res) => {
 });
 
 const isImageFile = (file) => file && [
-		"image/png",
-		"image/jpeg",
-		"image/jpg",
-	].includes(file.mimetype);
+	"image/png",
+	"image/jpeg",
+	"image/jpg",
+].includes(file.mimetype);
 
 
 const isAudioFile = (file) => file && [
-		"audio/mpeg",
-	].includes(file.mimetype);
+	"audio/mpeg",
+].includes(file.mimetype);
 
 
 const isVideoFile = (file) => file && [
-		"video/mp4",
-	].includes(file.mimetype);
+	"video/mp4",
+].includes(file.mimetype);
 
 
 const storeFile = (req, res, callback) => {
